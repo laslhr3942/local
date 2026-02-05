@@ -3,7 +3,7 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { ProductInfo, GeneratedCopy } from "../types";
 
 export const generateCopy = async (info: ProductInfo): Promise<GeneratedCopy> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+  const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_API_KEY || '' });
   
   const prompt = `
     다음 로컬 제품에 대한 매력적인 마케팅 카피를 작성해 주세요.
