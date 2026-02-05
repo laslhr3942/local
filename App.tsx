@@ -2,8 +2,8 @@
 import React, { useState, useCallback } from 'react';
 import { ProductInfo, GeneratedCopy, AppStatus } from './types';
 import { generateCopy } from './geminiService';
-import ProductForm from './components/ProductForm';
-import CopyDisplay from './components/CopyDisplay';
+import ProductForm from './ProductForm';
+import CopyDisplay from './CopyDisplay';
 
 const App: React.FC = () => {
   const [formData, setFormData] = useState<ProductInfo>({
