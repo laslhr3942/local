@@ -1,7 +1,7 @@
 
 import React, { useState, useCallback } from 'react';
 import { ProductInfo, GeneratedCopy, AppStatus } from './types';
-import { generateCopy } from './services/geminiService';
+import { generateCopy } from './geminiService';
 import ProductForm from './components/ProductForm';
 import CopyDisplay from './components/CopyDisplay';
 
