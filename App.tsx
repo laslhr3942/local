@@ -1,17 +1,22 @@
 
 import React, { useState, useCallback } from 'react';
 import { ProductInfo, GeneratedCopy, AppStatus } from './types';
-import { generateCopy } from './geminiService';
-import ProductForm from './ProductForm';
-import CopyDisplay from './CopyDisplay';
+import { generateCopy } from './services/geminiService';
+import { logUsageData } from './services/loggingService';
+import ProductForm from './components/ProductForm';
+import CopyDisplay from './components/CopyDisplay';
 
 const App: React.FC = () => {
   const [formData, setFormData] = useState<ProductInfo>({
+    userName: '',
     productName: '',
     region: '',
     features: '',
+    producerStory: '',
+    season: '',
     target: '',
     tone: '따뜻하고 서정적인',
+    outputFormat: 'SNS',
   });
 
   const [status, setStatus] = useState<AppStatus>(AppStatus.IDLE);
@@ -32,6 +37,11 @@ const App: React.FC = () => {
       setResult(copy);
       setStatus(AppStatus.SUCCESS);
       
+      await logUsageData({
+        ...formData,
+        generatedHeadline: copy.headline,
+      });
+
       setTimeout(() => {
         const resultElement = document.getElementById('result-section');
         resultElement?.scrollIntoView({ behavior: 'smooth' });
@@ -49,20 +59,13 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen pb-20 bg-[#fcfaf7]">
-      {/* Header */}
       <header className="py-12 md:py-20 px-6 text-center">
         <div className="max-w-4xl mx-auto">
           <div className="flex flex-wrap justify-center gap-3 mb-6">
             <div className="px-4 py-1.5 bg-stone-100 text-stone-600 rounded-full text-xs md:text-sm font-medium tracking-wide">
               10-YEAR LOCAL CURATOR AI
             </div>
-            <button 
-              onClick={copyServiceUrl}
-              className="px-4 py-1.5 bg-orange-500 text-white rounded-full text-xs md:text-sm font-bold hover:bg-orange-600 transition-all shadow-sm flex items-center gap-1.5"
-            >
-              <svg className="w-3.5 h-3.5 md:w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-              </svg>
+            <button onClick={copyServiceUrl} className="px-4 py-1.5 bg-orange-500 text-white rounded-full text-xs md:text-sm font-bold hover:bg-orange-600 transition-all shadow-sm flex items-center gap-1.5">
               친구에게 링크 보내기
             </button>
           </div>
@@ -79,36 +82,20 @@ const App: React.FC = () => {
 
       <main className="max-w-6xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-12 items-start">
         <div className="lg:col-span-5">
-          <ProductForm
-            formData={formData}
-            onChange={handleInputChange}
-            onSubmit={handleSubmit}
-            isLoading={status === AppStatus.LOADING}
-          />
+          <ProductForm formData={formData} onChange={handleInputChange} onSubmit={handleSubmit} isLoading={status === AppStatus.LOADING} />
         </div>
 
         <div className="lg:col-span-7" id="result-section">
           {status === AppStatus.IDLE && (
             <div className="h-full flex flex-col items-center justify-center p-12 bg-white/50 border-2 border-dashed border-stone-200 rounded-3xl text-stone-400 min-h-[300px]">
-              <svg className="w-16 h-16 mb-4 opacity-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
-              <p className="text-lg font-light text-center">제품 정보를 입력하면<br className="md:hidden" /> 로컬 큐레이터의 이야기가 시작됩니다.</p>
+              <p className="text-lg font-light text-center">제품 정보를 입력하면<br /> 로컬 큐레이터의 이야기가 시작됩니다.</p>
             </div>
           )}
 
           {status === AppStatus.LOADING && (
             <div className="flex flex-col items-center justify-center py-20 animate-pulse">
               <div className="w-12 h-12 border-4 border-orange-200 border-t-orange-500 rounded-full animate-spin mb-6"></div>
-              <p className="serif text-xl text-stone-600 text-center px-4 leading-relaxed">로컬의 계절과 흙의 향기를<br className="md:hidden" /> 문장에 담고 있습니다...</p>
-            </div>
-          )}
-
-          {status === AppStatus.ERROR && (
-            <div className="bg-red-50 border border-red-100 p-8 rounded-2xl text-center shadow-sm">
-              <h3 className="text-red-800 font-bold mb-2">오류가 발생했습니다</h3>
-              <p className="text-red-600 mb-6">{error}</p>
-              <button onClick={handleSubmit} className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all">다시 시도하기</button>
+              <p className="serif text-xl text-stone-600 text-center px-4 leading-relaxed">로컬의 계절과 흙의 향기를 문장에 담고 있습니다...</p>
             </div>
           )}
 
@@ -116,13 +103,7 @@ const App: React.FC = () => {
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
               <CopyDisplay copy={result} />
               <div className="mt-8 flex flex-col md:flex-row gap-4 items-center justify-center text-stone-400 text-sm">
-                <span>큐레이션이 마음에 드시나요?</span>
-                <button 
-                  onClick={() => setStatus(AppStatus.IDLE)} 
-                  className="px-6 py-2 border border-stone-200 rounded-full hover:bg-white hover:text-stone-700 hover:border-stone-400 transition-all font-medium"
-                >
-                  새로운 제품 작성하기
-                </button>
+                <button onClick={() => setStatus(AppStatus.IDLE)} className="px-6 py-2 border border-stone-200 rounded-full hover:bg-white hover:text-stone-700 transition-all font-medium">새로운 제품 작성하기</button>
               </div>
             </div>
           )}
@@ -130,9 +111,8 @@ const App: React.FC = () => {
       </main>
 
       <footer className="mt-20 py-12 border-t border-stone-100 text-center">
-        <p className="text-stone-400 text-xs font-light tracking-widest uppercase">
-          © 2024 Local Curator Copywriter. Designed with soul & heritage.
-        </p>
+        <p className="text-stone-500 text-sm font-semibold mb-2">슈림컴퍼니_26년</p>
+        <p className="text-stone-400 text-xs font-light tracking-widest uppercase">© 2026 Shurim Company. All rights reserved.</p>
       </footer>
     </div>
   );
